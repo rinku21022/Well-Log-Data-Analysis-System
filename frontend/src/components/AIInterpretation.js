@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -45,12 +45,7 @@ function AIInterpretation({ file }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    loadCurves();
-    loadPastInterpretations();
-  }, [file.id]);
-
-  const loadCurves = async () => {
+  const loadCurves = useCallback(async () => {
     try {
       const data = await getCurves(file.id);
       setCurves(data.curves);
@@ -62,16 +57,21 @@ function AIInterpretation({ file }) {
     } catch (err) {
       setError('Error loading curves: ' + (err.response?.data?.error || err.message));
     }
-  };
+  }, [file.id]);
 
-  const loadPastInterpretations = async () => {
+  const loadPastInterpretations = useCallback(async () => {
     try {
       const data = await getInterpretations(file.id);
       setPastInterpretations(data.interpretations);
     } catch (err) {
       console.error('Error loading past interpretations:', err);
     }
-  };
+  }, [file.id]);
+
+  useEffect(() => {
+    loadCurves();
+    loadPastInterpretations();
+  }, [loadCurves, loadPastInterpretations]);
 
   const handleCurveChange = (event) => {
     const value = event.target.value;
