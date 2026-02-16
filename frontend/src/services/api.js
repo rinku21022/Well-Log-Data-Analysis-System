@@ -1,6 +1,11 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+// Support multiple deployment env var names and fall back to a relative API path.
+// Prefer CRA-style REACT_APP_API_URL, then Vite-style VITE_API_BASE_URL, then
+// check for a runtime global (window.VITE_API_BASE_URL) for platforms that
+// inject client envs at runtime, then fall back to '/api'.
+const runtimeGlobal = (typeof window !== 'undefined') ? (window.REACT_APP_API_URL || window.VITE_API_BASE_URL) : undefined;
+const API_BASE_URL = process.env.REACT_APP_API_URL || process.env.VITE_API_BASE_URL || runtimeGlobal || '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
