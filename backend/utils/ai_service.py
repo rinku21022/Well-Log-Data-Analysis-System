@@ -1,7 +1,13 @@
-import google.generativeai as genai
 import os
 from typing import List, Dict, Any
 import json
+
+# google.generativeai is optional in environments where AI features are not required.
+# Try to import it and fall back gracefully if missing so the app can run without AI deps.
+try:
+    import google.generativeai as genai
+except Exception:
+    genai = None
 
 
 class AIService:
@@ -11,18 +17,27 @@ class AIService:
         """Initialize Google Gemini client"""
         api_key = os.getenv('GEMINI_API_KEY')
         print(f"DEBUG: GEMINI_API_KEY = {'SET' if api_key else 'NOT SET'}, Length = {len(api_key) if api_key else 0}")
+
+        # If the google generative ai package isn't installed, disable AI features.
+        if genai is None:
+            self.enabled = False
+            print("Info: google.generativeai package not installed. AI features disabled.")
+            return
+
         if not api_key or api_key.strip() == '':
             self.enabled = False
             print("Warning: GEMINI_API_KEY not set. AI features will be disabled.")
-        else:
-            try:
-                genai.configure(api_key=api_key)
-                self.model = genai.GenerativeModel('models/gemini-2.5-flash')
-                self.enabled = True
-                print("SUCCESS: Gemini AI configured and enabled!")
-            except Exception as e:
-                self.enabled = False
-                print(f"ERROR configuring Gemini: {str(e)}")
+            return
+
+        try:
+            genai.configure(api_key=api_key)
+            # Create a model handle lazily; some environments may not accept model creation here.
+            self.model = genai.GenerativeModel('models/gemini-2.5-flash')
+            self.enabled = True
+            print("SUCCESS: Gemini AI configured and enabled!")
+        except Exception as e:
+            self.enabled = False
+            print(f"ERROR configuring Gemini: {str(e)}")
     
     def interpret_curves(
         self, 
