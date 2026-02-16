@@ -67,15 +67,15 @@ from flask import Flask
 from flask_cors import CORS
 from flask_migrate import Migrate
 from flask import send_from_directory
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 import os
 
 from models import db
 
 # Load environment variables with explicit path
-basedir = os.path.abspath(os.path.dirname(__file__))
-dotenv_path = os.path.join(basedir, '.env')
-load_dotenv(dotenv_path)
+# basedir = os.path.abspath(os.path.dirname(__file__))
+# dotenv_path = os.path.join(basedir, '.env')
+# load_dotenv(dotenv_path)
 print(f"DEBUG: Loaded .env from: {dotenv_path}")
 print(f"DEBUG: GEMINI_API_KEY = {'SET (' + str(len(os.getenv('GEMINI_API_KEY', ''))) + ' chars)' if os.getenv('GEMINI_API_KEY') else 'NOT SET'}")
 
