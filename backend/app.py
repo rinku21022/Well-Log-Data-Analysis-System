@@ -72,12 +72,21 @@ import os
 
 from models import db
 
-# Load environment variables with explicit path
-# basedir = os.path.abspath(os.path.dirname(__file__))
-# dotenv_path = os.path.join(basedir, '.env')
-# load_dotenv(dotenv_path)
-print(f"DEBUG: Loaded .env from: {dotenv_path}")
-print(f"DEBUG: GEMINI_API_KEY = {'SET (' + str(len(os.getenv('GEMINI_API_KEY', ''))) + ' chars)' if os.getenv('GEMINI_API_KEY') else 'NOT SET'}")
+# Load environment variables from .env if present (safe on platforms that set envvars)
+basedir = os.path.abspath(os.path.dirname(__file__))
+dotenv_path = os.path.join(basedir, '.env')
+try:
+    # load_dotenv is optional in production where env vars are provided by the host
+    from dotenv import load_dotenv
+    load_dotenv(dotenv_path)
+    print(f"DEBUG: Attempted to load .env from: {dotenv_path} (exists={os.path.exists(dotenv_path)})")
+except Exception as e:
+    # If python-dotenv isn't available or fails, keep running using environment variables
+    print(f"DEBUG: python-dotenv not loaded: {e}")
+
+print(
+    f"DEBUG: GEMINI_API_KEY = {'SET (' + str(len(os.getenv('GEMINI_API_KEY', ''))) + ' chars)' if os.getenv('GEMINI_API_KEY') else 'NOT SET'}"
+)
 
 app = Flask(__name__)
 CORS(app)
