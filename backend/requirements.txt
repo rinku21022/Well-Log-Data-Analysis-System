@@ -9,4 +9,4 @@ python-dotenv==1.0.0
 boto3==1.28.25
 lasio==0.31
 pandas==2.2.2
-git add runtime.txt
+gunicorn
