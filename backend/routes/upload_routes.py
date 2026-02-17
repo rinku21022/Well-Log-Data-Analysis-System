@@ -17,7 +17,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-@bp.route('/upload', methods=['POST'])
+@bp.route('/upload', methods=['POST', 'OPTIONS'])
 def upload_file():
     """
     Upload and process a LAS file
@@ -25,6 +25,9 @@ def upload_file():
     Returns:
         JSON response with file information
     """
+    # Handle CORS preflight requests
+    if request.method == 'OPTIONS':
+        return '', 200
     # Check if file is in request
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400

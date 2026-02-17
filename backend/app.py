@@ -89,7 +89,12 @@ print(
 )
 
 app = Flask(__name__)
-CORS(app)
+
+# Configure CORS with specific settings for file uploads
+CORS(app, 
+     resources={r"/api/*": {"origins": "*"}},
+     methods=["GET", "POST", "OPTIONS"],
+     allow_headers=["Content-Type", "Authorization"])
 
 # Configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
