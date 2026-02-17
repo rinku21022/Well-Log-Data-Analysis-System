@@ -4,15 +4,5 @@
   "framework": "create-react-app",
   "env": {
     "REACT_APP_API_URL": "@react_app_api_url"
-  },
-  "rewrites": [
-    {
-      "source": "/api/:match*",
-      "destination": "${REACT_APP_API_URL}/:match*"
-    },
-    {
-      "source": "/:path*",
-      "destination": "/index.html"
-    }
-  ]
+  }
 }

@@ -1,38 +1,42 @@
 import axios from 'axios';
 
-// Support multiple deployment env var names and fall back to a relative API path.
-const runtimeGlobal = (typeof window !== 'undefined') ? (window.REACT_APP_API_URL || window.VITE_API_BASE_URL) : undefined;
+// Get backend URL - MUST be set as environment variable
+const BACKEND_URL = process.env.REACT_APP_API_URL;
 
-// Determine API base URL
-let API_BASE_URL = process.env.REACT_APP_API_URL || process.env.VITE_API_BASE_URL || runtimeGlobal;
+console.log('=== API Configuration ===');
+console.log('REACT_APP_API_URL:', BACKEND_URL);
 
-// Log for debugging
-console.log('Environment check:');
-console.log('process.env.REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
-console.log('process.env.VITE_API_BASE_URL:', process.env.VITE_API_BASE_URL);
-console.log('Final API_BASE_URL:', API_BASE_URL);
-
-// If no explicit backend URL, warn the user
-if (!API_BASE_URL) {
-  console.warn('⚠️ No backend URL configured. Requests will fail. Set REACT_APP_API_URL environment variable.');
-  API_BASE_URL = 'http://localhost:5000'; // Fallback for development
+if (!BACKEND_URL) {
+  console.error('❌ CRITICAL: REACT_APP_API_URL environment variable is NOT SET');
+  console.error('Please set REACT_APP_API_URL in Vercel environment variables');
+  console.error('Example: https://your-railway-backend.up.railway.app');
 }
 
+// All API calls will use the Backend URL directly
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: BACKEND_URL || 'http://localhost:5000',
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add response interceptor for debugging
+// Debug interceptor
+api.interceptors.request.use(request => {
+  console.log('REQUEST:', request.method.toUpperCase(), request.url);
+  return request;
+});
+
 api.interceptors.response.use(
-  response => response,
+  response => {
+    console.log('RESPONSE:', response.status, response.config.url);
+    return response;
+  },
   error => {
-    console.error('API Error:', {
+    console.error('API ERROR:', {
       url: error.config?.url,
-      method: error.config?.method,
       status: error.response?.status,
+      statusText: error.response?.statusText,
       message: error.message,
     });
     return Promise.reject(error);
@@ -43,16 +47,10 @@ export const uploadFile = async (file) => {
   const formData = new FormData();
   formData.append('file', file);
   
-  try {
-    console.log('Uploading file to:', `${API_BASE_URL}/api/upload`);
-    
-    const response = await api.post('/api/upload', formData);
-    
-    return response.data;
-  } catch (error) {
-    console.error('Upload error:', error);
-    throw error;
-  }
+  console.log('Uploading file:', file.name, 'to', `${BACKEND_URL}/api/upload`);
+  
+  const response = await api.post('/api/upload', formData);
+  return response.data;
 };
 
 export const getFiles = async () => {
