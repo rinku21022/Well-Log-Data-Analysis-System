@@ -10,10 +10,8 @@ const runtimeGlobal = (typeof window !== 'undefined') ? (window.REACT_APP_API_UR
 // 1. process.env.REACT_APP_API_URL (build-time CRA)
 // 2. process.env.VITE_API_BASE_URL (build-time Vite)
 // 3. runtime globals (window.REACT_APP_API_URL / window.VITE_API_BASE_URL / window.__ENV)
-// 4. Railway backend URL provided by the user
-// 5. relative '/api' (same-origin)
-const RAILWAY_FALLBACK = 'https://well-log-data-analysis-system-production.up.railway.app/api';
-const API_BASE_URL = process.env.REACT_APP_API_URL || process.env.VITE_API_BASE_URL || runtimeGlobal || RAILWAY_FALLBACK || '/api';
+// 4. relative '/api' (same-origin) - works on all deployments
+const API_BASE_URL = process.env.REACT_APP_API_URL || process.env.VITE_API_BASE_URL || runtimeGlobal || '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
