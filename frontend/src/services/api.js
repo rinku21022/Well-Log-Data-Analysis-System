@@ -1,19 +1,22 @@
 import axios from 'axios';
 
 // Support multiple deployment env var names and fall back to a relative API path.
-// Prefer CRA-style REACT_APP_API_URL, then Vite-style VITE_API_BASE_URL, then
-// check for a runtime global (window.VITE_API_BASE_URL) for platforms that
-// inject client envs at runtime, then fall back to '/api'.
-const runtimeGlobal = (typeof window !== 'undefined') ? (window.REACT_APP_API_URL || window.VITE_API_BASE_URL || (window.__ENV && (window.__ENV.REACT_APP_API_URL || window.__ENV.VITE_API_BASE_URL))) : undefined;
+const runtimeGlobal = (typeof window !== 'undefined') ? (window.REACT_APP_API_URL || window.VITE_API_BASE_URL) : undefined;
 
-// Final fallback order:
-// 1. process.env.REACT_APP_API_URL (build-time CRA)
-// 2. process.env.VITE_API_BASE_URL (build-time Vite)
-// 3. runtime globals (window.REACT_APP_API_URL / window.VITE_API_BASE_URL / window.__ENV)
-// 4. relative '/api' (same-origin) - works with Vercel rewrites
-const API_BASE_URL = process.env.REACT_APP_API_URL || process.env.VITE_API_BASE_URL || runtimeGlobal || '/api';
+// Determine API base URL
+let API_BASE_URL = process.env.REACT_APP_API_URL || process.env.VITE_API_BASE_URL || runtimeGlobal;
 
-console.log('API_BASE_URL:', API_BASE_URL);
+// Log for debugging
+console.log('Environment check:');
+console.log('process.env.REACT_APP_API_URL:', process.env.REACT_APP_API_URL);
+console.log('process.env.VITE_API_BASE_URL:', process.env.VITE_API_BASE_URL);
+console.log('Final API_BASE_URL:', API_BASE_URL);
+
+// If no explicit backend URL, warn the user
+if (!API_BASE_URL) {
+  console.warn('⚠️ No backend URL configured. Requests will fail. Set REACT_APP_API_URL environment variable.');
+  API_BASE_URL = 'http://localhost:5000'; // Fallback for development
+}
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -22,28 +25,28 @@ const api = axios.create({
   },
 });
 
+// Add response interceptor for debugging
+api.interceptors.response.use(
+  response => response,
+  error => {
+    console.error('API Error:', {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      message: error.message,
+    });
+    return Promise.reject(error);
+  }
+);
+
 export const uploadFile = async (file) => {
   const formData = new FormData();
   formData.append('file', file);
   
   try {
-    // For production, use the full backend URL from env var
-    // For development, use relative path
-    let uploadUrl = '/upload';
+    console.log('Uploading file to:', `${API_BASE_URL}/api/upload`);
     
-    if (API_BASE_URL && API_BASE_URL !== '/api') {
-      // We have a full backend URL
-      uploadUrl = `${API_BASE_URL}/upload`;
-    } else if (API_BASE_URL === '/api') {
-      // Use relative path through the proxy
-      uploadUrl = '/api/upload';
-    }
-    
-    console.log('Uploading to:', uploadUrl);
-    
-    const response = await axios.post(uploadUrl, formData, {
-      timeout: 30000,
-    });
+    const response = await api.post('/api/upload', formData);
     
     return response.data;
   } catch (error) {
@@ -53,22 +56,22 @@ export const uploadFile = async (file) => {
 };
 
 export const getFiles = async () => {
-  const response = await api.get('/files');
+  const response = await api.get('/api/files');
   return response.data;
 };
 
 export const getFile = async (fileId) => {
-  const response = await api.get(`/file/${fileId}`);
+  const response = await api.get(`/api/file/${fileId}`);
   return response.data;
 };
 
 export const getCurves = async (fileId) => {
-  const response = await api.get(`/curves/${fileId}`);
+  const response = await api.get(`/api/curves/${fileId}`);
   return response.data;
 };
 
 export const getVisualizationData = async (fileId, curves, startDepth, endDepth) => {
-  const response = await api.post('/visualize', {
+  const response = await api.post('/api/visualize', {
     file_id: fileId,
     curves: curves,
     start_depth: startDepth,
@@ -78,7 +81,7 @@ export const getVisualizationData = async (fileId, curves, startDepth, endDepth)
 };
 
 export const getInterpretation = async (fileId, curves, startDepth, endDepth) => {
-  const response = await api.post('/interpret', {
+  const response = await api.post('/api/interpret', {
     file_id: fileId,
     curves: curves,
     start_depth: startDepth,
@@ -88,12 +91,12 @@ export const getInterpretation = async (fileId, curves, startDepth, endDepth) =>
 };
 
 export const getInterpretations = async (fileId) => {
-  const response = await api.get(`/interpretations/${fileId}`);
+  const response = await api.get(`/api/interpretations/${fileId}`);
   return response.data;
 };
 
 export const chatWithAI = async (fileId, message, conversationHistory) => {
-  const response = await api.post('/chat', {
+  const response = await api.post('/api/chat', {
     file_id: fileId,
     message: message,
     conversation_history: conversationHistory,
@@ -102,7 +105,7 @@ export const chatWithAI = async (fileId, message, conversationHistory) => {
 };
 
 export const deleteFile = async (fileId) => {
-  const response = await api.delete(`/file/${fileId}`);
+  const response = await api.delete(`/api/file/${fileId}`);
   return response.data;
 };
 
