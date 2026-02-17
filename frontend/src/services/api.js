@@ -26,11 +26,30 @@ export const uploadFile = async (file) => {
   const formData = new FormData();
   formData.append('file', file);
   
-  // Don't set Content-Type header - let axios/browser handle it automatically
-  // It will set the correct boundary for multipart/form-data
-  const response = await api.post('/upload', formData);
-  
-  return response.data;
+  try {
+    // For production, use the full backend URL from env var
+    // For development, use relative path
+    let uploadUrl = '/upload';
+    
+    if (API_BASE_URL && API_BASE_URL !== '/api') {
+      // We have a full backend URL
+      uploadUrl = `${API_BASE_URL}/upload`;
+    } else if (API_BASE_URL === '/api') {
+      // Use relative path through the proxy
+      uploadUrl = '/api/upload';
+    }
+    
+    console.log('Uploading to:', uploadUrl);
+    
+    const response = await axios.post(uploadUrl, formData, {
+      timeout: 30000,
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Upload error:', error);
+    throw error;
+  }
 };
 
 export const getFiles = async () => {

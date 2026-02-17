@@ -27,7 +27,8 @@ def upload_file():
     """
     # Handle CORS preflight requests
     if request.method == 'OPTIONS':
-        return '', 200
+        return '', 204
+    
     # Check if file is in request
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
